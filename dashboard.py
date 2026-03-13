@@ -5,6 +5,13 @@ import ccxt
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 import ta # Technical Analysis Library: pip install ta
+import os
+
+# Configuração para Render
+if os.getenv('RENDER'):
+    # Configurações específicas para Render
+    st.set_option('server.headless', True)
+    st.set_option('server.enableCORS', False)
 
 # Configuração da Página
 st.set_page_config(
