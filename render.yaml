@@ -3,11 +3,13 @@ services:
     name: crypto-dashboard
     env: python
     plan: free
-    buildCommand: pip install -r requirements.txt
-    startCommand: streamlit run dashboard.py --server.port $PORT --server.address 0.0.0.0 --server.headless true
+    buildCommand: chmod +x render-build.sh && ./render-build.sh
+    startCommand: python3.11 -m streamlit run dashboard.py --server.port $PORT --server.address 0.0.0.0 --server.headless true
     envVars:
       - key: PYTHON_VERSION
         value: 3.11.9
+      - key: PYTHONPATH
+        value: /opt/render/project/src/.venv/lib/python3.11/site-packages
     autoDeploy: true
     healthCheckPath: /_stcore/health
-    pythonVersion: 3.11.9
+    pythonVersion: "3.11.9"
