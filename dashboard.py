@@ -13,6 +13,10 @@ if os.getenv('RENDER'):
     st.set_option('server.headless', True)
     st.set_option('server.enableCORS', False)
 
+# Inicialização do Session State
+if 'analise_iniciada' not in st.session_state:
+    st.session_state.analise_iniciada = False
+
 # Configuração da Página
 st.set_page_config(
     page_title="Crypto Quant Scanner v4.2",
@@ -360,9 +364,6 @@ def verificar_altcoin_early_stage(df, ticker, sm_status):
 tickers = [t.strip() for t in tickers_input.split(',')]
 
 col1, col2, col3 = st.columns(3)
-
-if 'analise_iniciada' not in st.session_state:
-    st.session_state.analise_iniciada = False
 
 if st.sidebar.button("🚀 Iniciar Análise Global"):
     st.session_state.analise_iniciada = True
