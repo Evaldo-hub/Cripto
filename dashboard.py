@@ -10,7 +10,7 @@ import os
 # Configuração para Render
 if os.getenv('RENDER'):
     # Configurações específicas para Render
-    st.set_option('server.headless', True)
+ 
     st.set_option('server.enableCORS', False)
 
 # Inicialização do Session State
