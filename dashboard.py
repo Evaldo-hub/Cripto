@@ -5,16 +5,6 @@ import ccxt
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 import ta # Technical Analysis Library: pip install ta
-import os
-
-# Configuração para Render
-if os.getenv('RENDER'):
-    # Render já roda em modo headless automaticamente
-    pass
-
-# Inicialização do Session State
-if 'analise_iniciada' not in st.session_state:
-    st.session_state.analise_iniciada = False
 
 # Configuração da Página
 st.set_page_config(
@@ -23,6 +13,7 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="expanded"
 )
+
 # Estilização CSS Moderna para Dashboard Institucional
 st.markdown("""
     <style>
@@ -362,6 +353,9 @@ def verificar_altcoin_early_stage(df, ticker, sm_status):
 tickers = [t.strip() for t in tickers_input.split(',')]
 
 col1, col2, col3 = st.columns(3)
+
+if 'analise_iniciada' not in st.session_state:
+    st.session_state.analise_iniciada = False
 
 if st.sidebar.button("🚀 Iniciar Análise Global"):
     st.session_state.analise_iniciada = True
