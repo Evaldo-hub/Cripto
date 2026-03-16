@@ -9,9 +9,8 @@ import os
 
 # Configuração para Render
 if os.getenv('RENDER'):
-    # Configurações específicas para Render
- 
-    st.set_option('server.enableCORS', False)
+    # Render já roda em modo headless automaticamente
+    pass
 
 # Inicialização do Session State
 if 'analise_iniciada' not in st.session_state:
@@ -24,7 +23,6 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="expanded"
 )
-
 # Estilização CSS Moderna para Dashboard Institucional
 st.markdown("""
     <style>
