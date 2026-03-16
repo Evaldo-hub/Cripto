@@ -354,8 +354,15 @@ tickers = [t.strip() for t in tickers_input.split(',')]
 
 col1, col2, col3 = st.columns(3)
 
+import os
+
 if 'analise_iniciada' not in st.session_state:
-    st.session_state.analise_iniciada = False
+    
+    # No Render inicia automaticamente
+    if os.getenv("RENDER"):
+        st.session_state.analise_iniciada = True
+    else:
+        st.session_state.analise_iniciada = False
 
 if st.sidebar.button("🚀 Iniciar Análise Global"):
     st.session_state.analise_iniciada = True
@@ -589,7 +596,10 @@ if st.session_state.analise_iniciada:
             
             st.dataframe(history_df.style.map(map_color, subset=['Sinal']), use_container_width=True)
             
+import time
 
+time.sleep(60)
+st.rerun()
 
 st.markdown("---")
 st.markdown("🟢 **Status**: Conectado à API oficial da Binance via ccxt. Dados sendo extraídos em tempo real.")
