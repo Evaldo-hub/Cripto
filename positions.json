@@ -1,0 +1,127 @@
+{
+  "open_positions": {
+    "BNB/USDT": {
+      "symbol": "BNB/USDT",
+      "buy_price": 617.58,
+      "quantity": 1.0,
+      "stop_loss": 606.15,
+      "take_profit": 629.9316,
+      "current_price": 615.5,
+      "profit_percent": -0.3367984714530977,
+      "profit_amount": -2.080000000000041,
+      "highest_price": 617.58,
+      "trailing_stop": 606.15,
+      "open_time": "2026-03-31T17:21:13.036191+00:00",
+      "status": "open",
+      "notes": "Compra em $617.5800"
+    },
+    "XRP/USDT": {
+      "symbol": "XRP/USDT",
+      "buy_price": 1.3371,
+      "quantity": 1.0,
+      "stop_loss": 1.3113,
+      "take_profit": 1.363842,
+      "current_price": 1.3416,
+      "profit_percent": 0.3365492483733415,
+      "profit_amount": 0.0044999999999999485,
+      "highest_price": 1.3443,
+      "trailing_stop": 1.3183610724702715,
+      "open_time": "2026-03-31T18:25:39.342857+00:00",
+      "status": "open",
+      "notes": "Compra em $1.3371"
+    },
+    "AVAX/USDT": {
+      "symbol": "AVAX/USDT",
+      "buy_price": 8.91,
+      "quantity": 1.0,
+      "stop_loss": 8.72,
+      "take_profit": 9.0882,
+      "current_price": 8.9,
+      "profit_percent": -0.1122334455667765,
+      "profit_amount": -0.009999999999999787,
+      "highest_price": 8.91,
+      "trailing_stop": 8.72,
+      "open_time": "2026-03-31T19:05:59.762836+00:00",
+      "status": "open",
+      "notes": "Compra em $8.9100"
+    },
+    "INJ/USDT": {
+      "symbol": "INJ/USDT",
+      "buy_price": 2.895,
+      "quantity": 1.0,
+      "stop_loss": 2.851,
+      "take_profit": 2.9529,
+      "current_price": 2.892,
+      "profit_percent": -0.10362694300518527,
+      "profit_amount": -0.0030000000000001137,
+      "highest_price": 2.899,
+      "trailing_stop": 2.85493920552677,
+      "open_time": "2026-03-31T19:06:03.401395+00:00",
+      "status": "open",
+      "notes": "Compra em $2.8950"
+    },
+    "HBAR/USDT": {
+      "symbol": "HBAR/USDT",
+      "buy_price": 0.0877,
+      "quantity": 1.0,
+      "stop_loss": 0.08385,
+      "take_profit": 0.089454,
+      "current_price": 0.0877,
+      "profit_percent": 0.0,
+      "profit_amount": 0.0,
+      "highest_price": 0.0877,
+      "trailing_stop": 0.08385,
+      "open_time": "2026-03-31T20:07:03.680684+00:00",
+      "status": "open",
+      "notes": "Compra em $0.0877"
+    }
+  },
+  "closed_positions": {
+    "BTC/USDT": [
+      {
+        "symbol": "BTC/USDT",
+        "buy_price": 67757.73,
+        "quantity": 1.0,
+        "stop_loss": 66427.53,
+        "take_profit": 69112.88459999999,
+        "current_price": 67553.99,
+        "profit_percent": -0.3006889398449309,
+        "profit_amount": -203.7399999999907,
+        "highest_price": 68206.81,
+        "trailing_stop": 66867.79379237321,
+        "open_time": "2026-03-31T17:02:47.544311+00:00",
+        "status": "closed",
+        "notes": "Compra em $67757.7300 | Venda em $67553.9900 (VENDA URGENTE: URGENTE: Candle de reversão com volume elevado)",
+        "sell_price": 67553.99,
+        "close_time": "2026-03-31T17:54:10.954298+00:00",
+        "close_reason": "VENDA URGENTE: URGENTE: Candle de reversão com volume elevado"
+      }
+    ],
+    "INJ/USDT": [
+      {
+        "symbol": "INJ/USDT",
+        "buy_price": 2.905,
+        "quantity": 1.0,
+        "stop_loss": 2.847,
+        "take_profit": 2.9631,
+        "current_price": 2.888,
+        "profit_percent": -0.5851979345955217,
+        "profit_amount": -0.016999999999999904,
+        "highest_price": 2.905,
+        "trailing_stop": 2.847,
+        "open_time": "2026-03-31T17:21:16.353009+00:00",
+        "status": "closed",
+        "notes": "Compra em $2.9050 | Venda em $2.8880 (VENDA URGENTE: URGENTE: Candle de reversão com volume elevado)",
+        "sell_price": 2.888,
+        "close_time": "2026-03-31T18:36:34.481847+00:00",
+        "close_reason": "VENDA URGENTE: URGENTE: Candle de reversão com volume elevado"
+      }
+    ]
+  },
+  "settings": {
+    "default_stop_loss": 5.0,
+    "default_take_profit": 10.0,
+    "trailing_stop": true,
+    "min_profit": 2.0
+  }
+}

@@ -1,0 +1,34 @@
+{
+  "telegram": {
+    "token": "SEU_TOKEN_AQUI",
+    "chat_id": "SEU_CHAT_ID_AQUI",
+    "enabled": true
+  },
+  "strategy": {
+    "rsi_entrada": 25,
+    "rsi_saida_min": 70,
+    "rsi_saida_max": 75,
+    "multi_timeframe_validation": true,
+    "timeframe_confirmation": "15m",
+    "real_closing": true
+  },
+  "favorites": [
+    "BTC/USDT",
+    "ETH/USDT", 
+    "BNB/USDT",
+    "SOL/USDT",
+    "AVAX/USDT",
+    "XRP/USDT",
+    "TLM/USDT",
+    "DEXE/USDT",
+    "INJ/USDT",
+    "MASK/USDT",
+    "OP/USDT",
+    "HBAR/USDT",
+    "ILV/USDT"
+  ],
+  "ui": {
+    "auto_refresh": true,
+    "refresh_interval": 5
+  }
+}

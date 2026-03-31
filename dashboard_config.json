@@ -1,0 +1,36 @@
+{
+  "telegram": {
+    "token": "8388913084:AAHjXsBXbahYTrm0Ht3Vxil-ySV_YjEMDNY",
+    "chat_id": "7316734569",
+    "enabled": "7316734569"
+  },
+  "strategy": {
+    "rsi_entrada": 25,
+    "rsi_saida_min": 70,
+    "rsi_saida_max": 83,
+    "multi_timeframe": true,
+    "timeframe_confirmation": "15m",
+    "real_closing": true,
+    "multi_timeframe_validation": true,
+    "require_real_closing": true
+  },
+  "favorites": [
+    "BTC/USDT",
+    "ETH/USDT",
+    "BNB/USDT",
+    "SOL/USDT",
+    "AVAX/USDT",
+    "XRP/USDT",
+    "TLM/USDT",
+    "DEXE/USDT",
+    "INJ/USDT",
+    "MASK/USDT",
+    "OP/USDT",
+    "HBAR/USDT",
+    "ILV/USDT"
+  ],
+  "ui": {
+    "auto_refresh": true,
+    "refresh_interval": 5
+  }
+}

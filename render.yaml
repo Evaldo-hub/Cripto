@@ -4,12 +4,12 @@ services:
     env: python
     plan: free
     buildCommand: chmod +x render-build.sh && ./render-build.sh
-    startCommand: python3.11 -m streamlit run dashboard.py --server.port $PORT --server.address 0.0.0.0 --server.headless true
+    startCommand: python3.11 -m streamlit run dashboard_estrategia_4h.py --server.port $PORT --server.address 0.0.0.0 --server.headless true
     envVars:
       - key: PYTHON_VERSION
         value: 3.11.9
       - key: PYTHONPATH
-        value: /opt/render/project/src/.venv/lib/python3.11/site-packages
+        value: /opt/render/project:/opt/render/project/src/.venv/lib/python3.11/site-packages
     autoDeploy: true
     healthCheckPath: /_stcore/health
     pythonVersion: "3.11.9"
