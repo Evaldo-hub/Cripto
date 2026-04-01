@@ -928,6 +928,7 @@ def run_estrategia_analysis():
         st.info(f"⚡ Analisando {len(symbols)} moedas: {', '.join(symbols[:5])}{'...' if len(symbols) > 5 else ''}")
         
         # Coleta dados em 1h e 15m
+        import time  # Mover para cá - topo da função
         start_time = time.time()
         symbols_data = {}
         
@@ -954,7 +955,6 @@ def run_estrategia_analysis():
                     logger.warning(f" {symbol}: Sem dados 1h")
                 
                 # Delay entre requisições para evitar ban
-                import time
                 time.sleep(0.3)
                 
             except Exception as e:
@@ -1028,11 +1028,11 @@ def run_estrategia_analysis():
         # Mostra debug dos sinais
         col_debug1, col_debug2, col_debug3 = st.columns(3)
         with col_debug1:
-            st.metric("", len(buy_signals))
+            st.metric("Sinais de Compra", len(buy_signals))
         with col_debug2:
-            st.metric("", len(sell_signals))
+            st.metric("Sinais de Venda", len(sell_signals))
         with col_debug3:
-            st.metric("", len(strong_signals))
+            st.metric("Sinais Fortes", len(strong_signals))
         
         # Mostra detalhes dos sinais de compra
         if buy_signals:
@@ -1762,7 +1762,7 @@ if POSITION_MANAGER_AVAILABLE:
                     height=400
                 )
                 
-                st.plotly_chart(fig_profit, use_container_width=True)
+                st.plotly_chart(fig_profit, width='stretch')
     
     with pos_tab2:
         # Posições abertas
@@ -1872,9 +1872,9 @@ if POSITION_MANAGER_AVAILABLE:
                     color = 'green' if num_val > 0 else 'red' if num_val < 0 else 'gray'
                     return f'color: {color}'
                 
-                display_df = display_df.style.applymap(color_profit, subset=['Lucro %', 'Lucro $'])
+                display_df = display_df.style.map(color_profit, subset=['Lucro %', 'Lucro $'])
                 
-                st.dataframe(display_df, use_container_width=True)
+                st.dataframe(display_df, width='stretch')
         else:
             st.info("📭 Nenhuma posição fechada ainda")
 
@@ -2081,8 +2081,8 @@ if st.session_state.results:
         # Ajusta largura das colunas
         st.dataframe(
             df_results,
-            use_container_width=True,
-            height=400 if len(results_data) > 10 else None,
+            width='stretch',
+            height=400 if len(results_data) > 10 else 'content',
             column_config={
                 "Símbolo": st.column_config.TextColumn(width="small"),
                 "Preço": st.column_config.TextColumn(width="small"),
@@ -2191,7 +2191,7 @@ if st.session_state.results:
                     # Gráfico
                     st.markdown("### 📈 Gráfico de Preços")
                     fig = create_strategy_chart(result)
-                    st.plotly_chart(fig, use_container_width=True)
+                    st.plotly_chart(fig, width='stretch')
 else:
     st.info("🔄 Execute uma análise para ver os resultados")
     st.markdown("""
