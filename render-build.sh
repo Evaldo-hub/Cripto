@@ -15,7 +15,7 @@ echo "Installing additional dependencies for network operations..."
 python3.11 -m pip install --no-cache-dir aiohttp httpx
 
 echo "Installing streamlit-autorefresh for auto-refresh functionality..."
-python3.11 -m pip install --no-cache-dir streamlit-autorefresh==0.2.0
+python3.11 -m pip install --no-cache-dir streamlit-autorefresh==1.0.1
 
 echo "Verifying critical packages..."
 python3.11 -c "import ccxt, pandas, streamlit, streamlit_autorefresh; print('✅ All packages imported successfully')"
