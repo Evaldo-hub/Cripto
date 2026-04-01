@@ -693,14 +693,26 @@ class Estrategia1hEngine:
         
         return True, f"✅ Fechamento real 1h às {closing_hour:02d}:00 UTC"
     
-    def analyze_symbol_estrategia(self, symbol: str, collector) -> Dict:
+    def analyze_symbol_estrategia(self, symbol: str, df_1h: pd.DataFrame = None, collector=None) -> Dict:
         """Análise completa para um símbolo usando estratégia 1h"""
         try:
-            # Coleta dados para timeframes
-            df_1h = collector.fetch_single_symbol((symbol, '1h', 100, 'binance'))
+            # Se dataframe não fornecido, coleta dados (fallback)
+            if df_1h is None and collector:
+                df_1h = collector.fetch_single_symbol((symbol, '1h', 100, 'binance'))
+            elif df_1h is None:
+                return {
+                    'symbol': symbol,
+                    'error': f'Dados não fornecidos para {symbol}',
+                    'price': 0,
+                    'score_entrada': 0,
+                    'sinal_saida': False,
+                    'motivo_saida': '',
+                    'nivel_saida': 'espera'
+                }
+            
             df_15m = None
             
-            if self.estrategia_config['multi_timeframe_validation']:
+            if self.estrategia_config['multi_timeframe_validation'] and collector:
                 df_15m = collector.fetch_single_symbol((symbol, '15m', 50, 'binance'))
             
             if df_1h is None or len(df_1h) < self.estrategia_config['min_candles']:
@@ -863,6 +875,21 @@ def run_estrategia_analysis():
         collector = get_parallel_collector(max_workers=15)
         logger.info("Collector criado com sucesso")
         
+        # Teste de conectividade com Binance
+        st.info("🌐 Testando conectividade com Binance...")
+        try:
+            import requests
+            response = requests.get("https://api.binance.com/api/v3/ping", timeout=10)
+            if response.status_code == 200:
+                st.success("✅ Binance API conectada!")
+                st.write(f"Status: {response.status_code} - {response.text}")
+            else:
+                st.error(f"❌ Erro Binance: {response.status_code}")
+                st.write(f"Response: {response.text}")
+        except Exception as e:
+            st.error(f"❌ Erro de conectividade Binance: {repr(e)}")
+            st.warning("🔄 Continuando mesmo assim...")
+        
         logger.info("Criando engine...")
         engine = Estrategia1hEngine()
         logger.info("Engine criada com sucesso")
@@ -901,9 +928,14 @@ def run_estrategia_analysis():
                     logger.info(f" {symbol}: {len(df)} candles coletados")
                 else:
                     logger.warning(f" {symbol}: Sem dados")
+                
+                # Delay entre requisições para evitar ban
+                import time
+                time.sleep(0.5)
+                
             except Exception as e:
-                logger.warning(f"Erro ao coletar {symbol}: {e}")
-                st.warning(f"  Erro ao coletar {symbol}: {str(e)[:50]}...")
+                logger.error(f"Erro ao coletar {symbol}: {e}")
+                st.error(f"Erro completo em {symbol}: {repr(e)}")
         
         collection_time = time.time() - start_time
         
@@ -919,7 +951,8 @@ def run_estrategia_analysis():
         strategy_results = []
         
         for symbol, df in symbols_data.items():
-            result = engine.analyze_symbol_estrategia(symbol, collector)
+            # Passa o dataframe já coletado para evitar requisições duplicadas
+            result = engine.analyze_symbol_estrategia(symbol, df)
             strategy_results.append(result)
         
         # Remove resultados com erro
