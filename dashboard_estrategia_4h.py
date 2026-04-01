@@ -1794,7 +1794,7 @@ if POSITION_MANAGER_AVAILABLE:
                     color = 'green' if num_val > 0 else 'red' if num_val < 0 else 'gray'
                     return f'color: {color}'
                 
-                display_df = display_df.style.applymap(color_profit, subset=['Lucro %', 'Lucro $'])
+                display_df = display_df.style.map(color_profit, subset=['Lucro %', 'Lucro $'])
                 
                 st.dataframe(display_df, use_container_width=True)
         else:
