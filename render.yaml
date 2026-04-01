@@ -9,7 +9,7 @@ services:
       - key: PYTHON_VERSION
         value: 3.11.9
       - key: PYTHONPATH
-        value: /opt/render/project:/opt/render/project/src/.venv/lib/python3.11/site-packages
+        value: /opt/render/project/src:/opt/render/project
     autoDeploy: true
     healthCheckPath: /_stcore/health
     pythonVersion: "3.11.9"
