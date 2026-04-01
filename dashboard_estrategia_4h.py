@@ -50,7 +50,21 @@ ma_period = st.sidebar.number_input("Período EMA Principal", 10, 200, 56)
 @st.cache_data(ttl=300)
 def load_data(ticker, interval="4h", limit=200):
     try:
-        exchange = ccxt.binance({'enableRateLimit': True})
+        # Configuração robusta da Binance
+        exchange = ccxt.binance({
+            'enableRateLimit': True,
+            'timeout': 30000,
+            'options': {
+                'defaultType': 'spot'
+            }
+        })
+        
+        # Força uso de endpoint alternativo (MUITO IMPORTANTE)
+        exchange.urls['api'] = {
+            'public': 'https://api.binance.com/api/v3',
+            'private': 'https://api.binance.com/api/v3'
+        }
+        
         bars = exchange.fetch_ohlcv(ticker, timeframe=interval, limit=limit)
         if not bars:
             return None
@@ -61,6 +75,7 @@ def load_data(ticker, interval="4h", limit=200):
         df.set_index('Timestamp', inplace=True)
         return df
     except Exception as e:
+        st.error(f"Erro em {ticker}: {str(e)}")
         return None
 
 def apply_indicators(df):
@@ -151,7 +166,8 @@ def verificar_anomalia_volume(ticker, exchange):
                 "multiplicador_vol": round(vela_atual['Volume'] / media_vol, 1)
             }
         return None
-    except:
+    except Exception as e:
+        st.error(f"Erro em verificar_anomalia_volume {ticker}: {str(e)}")
         return None
 
 def verificar_manipulacao_baleias(df):
@@ -372,41 +388,59 @@ if st.session_state.analise_iniciada:
         gemas_detectadas = []
         
         for ticker in tickers:
-            exchange = ccxt.binance({'enableRateLimit': True})
-            df = load_data(ticker, interval=timeframe)
-            if df is not None and len(df) > 60:
-                df = apply_indicators(df)
-                last_row = df.iloc[-1]
-                current_price = last_row['Close']
-                
-                score, sinal, motivo = calcular_score_sinal(last_row, current_price)
-                
-                anomalia = verificar_anomalia_volume(ticker, exchange)
-                baleias = verificar_manipulacao_baleias(df)
-                sm_status, sm_confiabilidade = verificar_smart_money(df)
-                early_gem_data = verificar_altcoin_early_stage(df, ticker, sm_status)
-                
-                resultados.append({
-                    "Ativo": ticker.replace("/USDT", ""),
-                    "Preço": current_price,
-                    "Score": score,
-                    "Sinal": sinal,
-                    "Smart Money": sm_status,
-                    "Confiabilidade": sm_confiabilidade,
-                    "RSI": round(last_row['RSI'], 1),
-                    "Status": "Normal" if score < 70 else "Breakout Provável",
-                    "Observação": motivo,
-                    "Anomalia_5m": anomalia,
-                    "Manipulacao_Baleia": baleias
+            try:
+                # Configuração robusta da Binance
+                exchange = ccxt.binance({
+                    'enableRateLimit': True,
+                    'timeout': 30000,
+                    'options': {
+                        'defaultType': 'spot'
+                    }
                 })
                 
-                if early_gem_data and int(early_gem_data["Score_Explosivo"]) >= 60:
-                    gemas_detectadas.append({
+                # Força uso de endpoint alternativo (MUITO IMPORTANTE)
+                exchange.urls['api'] = {
+                    'public': 'https://api.binance.com/api/v3',
+                    'private': 'https://api.binance.com/api/v3'
+                }
+                
+                df = load_data(ticker, interval=timeframe)
+                if df is not None and len(df) > 60:
+                    df = apply_indicators(df)
+                    last_row = df.iloc[-1]
+                    current_price = last_row['Close']
+                    
+                    score, sinal, motivo = calcular_score_sinal(last_row, current_price)
+                    
+                    anomalia = verificar_anomalia_volume(ticker, exchange)
+                    baleias = verificar_manipulacao_baleias(df)
+                    sm_status, sm_confiabilidade = verificar_smart_money(df)
+                    early_gem_data = verificar_altcoin_early_stage(df, ticker, sm_status)
+                    
+                    resultados.append({
                         "Ativo": ticker.replace("/USDT", ""),
                         "Preço": current_price,
+                        "Score": score,
+                        "Sinal": sinal,
                         "Smart Money": sm_status,
-                        "Early_Gem": early_gem_data
+                        "Confiabilidade": sm_confiabilidade,
+                        "RSI": round(last_row['RSI'], 1),
+                        "Status": "Normal" if score < 70 else "Breakout Provável",
+                        "Observação": motivo,
+                        "Anomalia_5m": anomalia,
+                        "Manipulacao_Baleia": baleias
                     })
+                    
+                    if early_gem_data and int(early_gem_data["Score_Explosivo"]) >= 60:
+                        gemas_detectadas.append({
+                            "Ativo": ticker.replace("/USDT", ""),
+                            "Preço": current_price,
+                            "Smart Money": sm_status,
+                            "Early_Gem": early_gem_data
+                        })
+            except Exception as e:
+                st.error(f"Erro ao processar {ticker}: {str(e)}")
+                continue
         
         if resultados:
             df_res = pd.DataFrame(resultados).sort_values(by="Score", ascending=False)
