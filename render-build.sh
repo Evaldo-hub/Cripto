@@ -14,8 +14,11 @@ python3.11 -m pip install --no-cache-dir -r requirements.txt
 echo "Installing additional dependencies for network operations..."
 python3.11 -m pip install --no-cache-dir aiohttp httpx
 
+echo "Installing streamlit-autorefresh for auto-refresh functionality..."
+python3.11 -m pip install --no-cache-dir streamlit-autorefresh==0.2.0
+
 echo "Verifying critical packages..."
-python3.11 -c "import ccxt, pandas, streamlit; print('✅ All packages imported successfully')"
+python3.11 -c "import ccxt, pandas, streamlit, streamlit_autorefresh; print('✅ All packages imported successfully')"
 
 echo "Setting up environment..."
 export PYTHONPATH="/opt/render/project/src:/opt/render/project:$PYTHONPATH"

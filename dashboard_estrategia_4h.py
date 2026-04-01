@@ -54,6 +54,24 @@ from simple_quant_engine import get_simple_quant_engine, SimpleAnalysisResult
 from database_manager_simple import db_manager
 import ta
 
+# Importar coletor específico para Render
+try:
+    from src.render_collector import get_render_collector
+    RENDER_COLLECTOR_AVAILABLE = True
+    logger.info("✅ Coletor Render disponível")
+except ImportError as e:
+    logger.warning(f"⚠️ Coletor Render não disponível: {e}")
+    RENDER_COLLECTOR_AVAILABLE = False
+
+# Importar streamlit-autorefresh
+try:
+    from streamlit_autorefresh import st_autorefresh
+    AUTOREFRESH_AVAILABLE = True
+    logger.info("✅ Streamlit-autorefresh disponível")
+except ImportError as e:
+    logger.warning(f"⚠️ Streamlit-autorefresh não disponível: {e}")
+    AUTOREFRESH_AVAILABLE = False
+
 # Importar gerenciador de configurações
 try:
     from config_manager import config_manager
@@ -880,12 +898,12 @@ def run_estrategia_analysis():
                 df = collector.fetch_single_symbol((symbol, '1h', 100, 'binance'))  # 1h timeframe
                 if df is not None and len(df) > 0:
                     symbols_data[symbol] = df
-                    logger.info(f"✅ {symbol}: {len(df)} candles coletados")
+                    logger.info(f" {symbol}: {len(df)} candles coletados")
                 else:
-                    logger.warning(f"❌ {symbol}: Sem dados")
+                    logger.warning(f" {symbol}: Sem dados")
             except Exception as e:
                 logger.warning(f"Erro ao coletar {symbol}: {e}")
-                st.warning(f"⚠️ Erro ao coletar {symbol}: {str(e)[:50]}...")
+                st.warning(f"  Erro ao coletar {symbol}: {str(e)[:50]}...")
         
         collection_time = time.time() - start_time
         
@@ -894,7 +912,7 @@ def run_estrategia_analysis():
             return
         
         logger.info(f"Dados coletados: {len(symbols_data)} símbolos em {collection_time:.2f}s")
-        st.success(f"✅ Dados coletados: {len(symbols_data)} símbolos em {collection_time:.1f}s")
+        st.success(f"  Dados coletados: {len(symbols_data)} símbolos em {collection_time:.1f}s")
         
         # Análise da estratégia
         start_time = time.time()
@@ -916,7 +934,7 @@ def run_estrategia_analysis():
         analysis_time = time.time() - start_time
         
         logger.info(f"Análise concluída: {len(valid_results)} resultados em {analysis_time:.2f}s")
-        st.success(f"🎯 Análise concluída: {len(valid_results)} resultados em {analysis_time:.1f}s")
+        st.success(f"  Análise concluída: {len(valid_results)} resultados em {analysis_time:.1f}s")
         
         # Atualiza session state
         st.session_state.results = valid_results
@@ -939,7 +957,7 @@ def run_estrategia_analysis():
         telegram_token = st.session_state.get('telegram_token', '')
         
         # Debug: Mostra informações sobre sinais encontrados
-        st.markdown("### 🐛 Debug - Processamento de Sinais")
+        st.markdown("###  Debug - Processamento de Sinais")
         
         # Separa sinais de compra e venda
         buy_signals = [r for r in valid_results if "COMPRA" in r.get('sinal_entrada', '').upper()]
@@ -949,17 +967,17 @@ def run_estrategia_analysis():
         # Mostra debug dos sinais
         col_debug1, col_debug2, col_debug3 = st.columns(3)
         with col_debug1:
-            st.metric("🟢 Sinais Compra", len(buy_signals))
+            st.metric("", len(buy_signals))
         with col_debug2:
-            st.metric("🔴 Sinais Venda", len(sell_signals))
+            st.metric("", len(sell_signals))
         with col_debug3:
-            st.metric("⚡ Sinais Fortes", len(strong_signals))
+            st.metric("", len(strong_signals))
         
         # Mostra detalhes dos sinais de compra
         if buy_signals:
-            st.markdown("#### 🟢 Detalhes dos Sinais de Compra:")
+            st.markdown("####  Detalhes dos Sinais de Compra:")
             for signal in buy_signals:
-                with st.expander(f"📊 {signal['symbol']} - {signal.get('sinal_entrada', 'N/A')}"):
+                with st.expander(f" {signal['symbol']} - {signal.get('sinal_entrada', 'N/A')}"):
                     st.json({
                         "symbol": signal['symbol'],
                         "sinal_entrada": signal.get('sinal_entrada', 'N/A'),
@@ -970,7 +988,7 @@ def run_estrategia_analysis():
         
         if telegram_token and TELEGRAM_AVAILABLE:
             if buy_signals or sell_signals or strong_signals:
-                st.info(f"🚀 Processando {len(buy_signals)} compras, {len(sell_signals)} vendas, {len(strong_signals)} sinais fortes...")
+                st.info(f"  Processando {len(buy_signals)} compras, {len(sell_signals)} vendas, {len(strong_signals)} sinais fortes...")
                 
                 # Get Telegram notifier
                 notifier = create_telegram_notifier()
@@ -985,15 +1003,15 @@ def run_estrategia_analysis():
                     sinal_entrada = signal.get('sinal_entrada', 'AGUARDAR')
                     
                     success = notifier.send_buy_signal(symbol, price, score, rsi, ema_status)
-                    signal_type = "🟢 COMPRA"
+                    signal_type = " COMPRA"
                     
                     # Abre posição automaticamente se disponível
                     if POSITION_MANAGER_AVAILABLE:
                         open_positions = position_manager.get_open_positions()
-                        st.info(f"🔍 Verificando posição para {symbol}: Já existe? {symbol in open_positions}")
+                        st.info(f"  Verificando posição para {symbol}: Já existe? {symbol in open_positions}")
                         
                         if symbol not in open_positions:
-                            st.info(f"🔍 Abrindo posição para {symbol}...")
+                            st.info(f"  Abrindo posição para {symbol}...")
                             position = position_manager.open_position(
                                 symbol=symbol,
                                 buy_price=price,
@@ -1003,26 +1021,26 @@ def run_estrategia_analysis():
                             )
                             
                             if position:
-                                st.success(f"✅ Posição aberta com sucesso: {symbol}")
+                                st.success(f"  Posição aberta com sucesso: {symbol}")
                                 notifier.send_message(
-                                    f"💰 **POSIÇÃO ABERTA**\n"
-                                    f"📈 {symbol}\n"
-                                    f"💵 Compra: ${price:.4f}\n"
-                                    f"🛡️ Stop Loss: ${position.get('stop_loss', 0):.4f}\n"
-                                    f"🎯 Take Profit: ${position.get('take_profit', 0):.4f}\n"
-                                    f"📊 Score: {score:.0f}\n"
-                                    f"📈 RSI: {rsi:.1f}\n"
-                                    f"📝 Sinal: {sinal_entrada}"
+                                    f" **POSIÇÃO ABERTA**\n"
+                                    f" {symbol}\n"
+                                    f" Compra: ${price:.4f}\n"
+                                    f" Stop Loss: ${position.get('stop_loss', 0):.4f}\n"
+                                    f" Take Profit: ${position.get('take_profit', 0):.4f}\n"
+                                    f" Score: {score:.0f}\n"
+                                    f" RSI: {rsi:.1f}\n"
+                                    f" Sinal: {sinal_entrada}"
                                 )
                             else:
-                                st.error(f"❌ Erro ao abrir posição para {symbol}")
+                                st.error(f"  Erro ao abrir posição para {symbol}")
                         else:
-                            st.warning(f"⚠️ Posição já existe para {symbol}")
+                            st.warning(f"  Posição já existe para {symbol}")
                     
                     if success:
-                        st.success(f"✅ Alerta enviado: {symbol} ({signal_type})")
+                        st.success(f"  Alerta enviado: {symbol} ({signal_type})")
                     else:
-                        st.warning(f"⚠️ Erro ao enviar alerta: {symbol}")
+                        st.warning(f"  Erro ao enviar alerta: {symbol}")
                 
                 # Processa sinais de venda
                 for signal in sell_signals:
@@ -1033,7 +1051,7 @@ def run_estrategia_analysis():
                     sinal_entrada = signal.get('sinal_entrada', 'AGUARDAR')
                     
                     success = notifier.send_sell_signal(symbol, price, score, rsi, sinal_entrada)
-                    signal_type = "🔴 VENDA"
+                    signal_type = " VENDA"
                     
                     # Verifica posições abertas para venda
                     if POSITION_MANAGER_AVAILABLE:
@@ -1439,44 +1457,43 @@ if auto_refresh_active:
             st.sidebar.markdown(f"**Intervalo:** {refresh_interval}")
             
             # Usar sistema nativo do Streamlit com refresh contínuo
-            try:
-                from streamlit_autorefresh import st_autorefresh
-                # Configurar refresh para verificar a cada 30 segundos
-                count = st_autorefresh(interval=30000, limit=None, key="auto_refresh_counter")
-                
-                # Quando o contador atualizar, verifica se é hora de analisar
-                current_time = datetime.now(timezone.utc)
-                if count > 0 and current_time >= next_update:
-                    st.sidebar.markdown("**Status:** 🔄 VERIFICANDO...")
-                    if 'engine' not in st.session_state:
-                        st.session_state.engine = Estrategia1hEngine()
+            if AUTOREFRESH_AVAILABLE:
+                try:
+                    from streamlit_autorefresh import st_autorefresh
+                    # Configurar refresh para verificar a cada 30 segundos
+                    count = st_autorefresh(interval=30000, limit=None, key="auto_refresh_counter")
                     
-                    st.session_state.engine.estrategia_config.update({
-                        'rsi_entrada_max': rsi_entrada,
-                        'rsi_saida_min': rsi_saida_min,
-                        'rsi_saida_max': rsi_saida_max,
-                        'multi_timeframe_validation': multi_tf_validation,
-                        'timeframe_confirmation': timeframe_confirm,
-                        'require_real_closing': real_1h_closing
-                    })
-                    
-                    # Atualiza timestamp antes de rodar a análise
-                    st.session_state.last_analysis_time = current_time
-                    run_estrategia_analysis()
-                    st.rerun()
-                    
-            except ImportError:
-                # Se não tiver streamlit-autorefresh, usa método alternativo
-                st.sidebar.markdown("**Info:** Install streamlit-autorefresh para melhor performance")
-                st.sidebar.markdown("`pip install streamlit-autorefresh`")
-                
-                # Método alternativo simples - verifica a cada refresh manual
-                current_time = datetime.now(timezone.utc)
-                if current_time >= next_update:
-                    st.session_state.last_analysis_time = current_time
-                    st.session_state.force_refresh = True
-                    run_estrategia_analysis()
-                    st.rerun()
+                    # Quando o contador atualizar, verifica se é hora de analisar
+                    current_time = datetime.now(timezone.utc)
+                    if count > 0 and current_time >= next_update:
+                        st.sidebar.markdown("**Status:** 🔄 VERIFICANDO...")
+                        if 'engine' not in st.session_state:
+                            st.session_state.engine = Estrategia1hEngine()
+                        
+                        st.session_state.engine.estrategia_config.update({
+                            'rsi_entrada_max': rsi_entrada,
+                            'rsi_saida_min': rsi_saida_min,
+                            'rsi_saida_max': rsi_saida_max,
+                            'multi_timeframe_validation': multi_tf_validation,
+                            'require_real_closing': real_1h_closing
+                        })
+                        
+                        st.session_state.last_analysis_time = current_time
+                        run_estrategia_analysis()
+                        st.rerun()
+                except ImportError:
+                    st.sidebar.warning("⚠️ streamlit-autorefresh não disponível")
+                    # Fallback para método manual
+                    current_time = datetime.now(timezone.utc)
+                    if current_time >= next_update:
+                        st.session_state.last_analysis_time = current_time
+                        st.session_state.force_refresh = True
+                        run_estrategia_analysis()
+                        st.rerun()
+            else:
+                st.sidebar.warning("⚠️ streamlit-autorefresh não instalado")
+                st.sidebar.info("📡 Auto-refresh desativado - use análise manual")
+                st.sidebar.markdown("**Para ativar:** `pip install streamlit-autorefresh`")
     else:
         st.sidebar.markdown("**Status:** 🔄 AGUARDANDO PRIMEIRA ANÁLISE...")
         st.sidebar.markdown("**Ação:** Execute uma análise manual para iniciar o auto-refresh")
@@ -1794,7 +1811,7 @@ if POSITION_MANAGER_AVAILABLE:
                     color = 'green' if num_val > 0 else 'red' if num_val < 0 else 'gray'
                     return f'color: {color}'
                 
-                display_df = display_df.style.map(color_profit, subset=['Lucro %', 'Lucro $'])
+                display_df = display_df.style.applymap(color_profit, subset=['Lucro %', 'Lucro $'])
                 
                 st.dataframe(display_df, use_container_width=True)
         else:
