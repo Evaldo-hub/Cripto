@@ -34,9 +34,37 @@ class ParallelDataCollector:
         self.max_workers = max_workers
         self.use_processes = use_processes
         self.exchanges = {
-            'binance': ccxt.binance({'enableRateLimit': True}),
-            'bybit': ccxt.bybit({'enableRateLimit': True}),
-            'okx': ccxt.okx({'enableRateLimit': True})
+            'binance': ccxt.binance({
+                'enableRateLimit': True,
+                'timeout': 30000,  # 30 segundos
+                'rateLimit': 1200,
+                'options': {
+                    'defaultType': 'spot',
+                    'adjustForTimeDifference': True,
+                    'headers': {
+                        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+                    }
+                },
+                'headers': {
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+                }
+            }),
+            'bybit': ccxt.bybit({
+                'enableRateLimit': True,
+                'timeout': 30000,
+                'rateLimit': 1200,
+                'headers': {
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+                }
+            }),
+            'okx': ccxt.okx({
+                'enableRateLimit': True,
+                'timeout': 30000,
+                'rateLimit': 1200,
+                'headers': {
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+                }
+            })
         }
         self.stats = CollectionStats(0, 0, 0, datetime.now(), datetime.now(), 0.0)
         self._lock = threading.Lock()

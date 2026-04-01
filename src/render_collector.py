@@ -31,17 +31,37 @@ class RenderDataCollector:
         self.session.mount("http://", adapter)
         self.session.mount("https://", adapter)
         
-        # Configuração do CCXT para Render
-        self.exchange = ccxt.binance({
+        # Configuração do CCXT para Render - Bybit como principal
+        self.exchange = ccxt.bybit({
             'enableRateLimit': True,
             'timeout': 30000,  # 30 segundos
             'rateLimit': 1200,  # Mais conservador
             'options': {
                 'defaultType': 'spot',
                 'adjustForTimeDifference': True,
+                'headers': {
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+                }
             },
             'headers': {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+            }
+        })
+        
+        # Fallback para OKX se Bybit falhar
+        self.exchange_fallback = ccxt.okx({
+            'enableRateLimit': True,
+            'timeout': 30000,
+            'rateLimit': 1200,
+            'options': {
+                'defaultType': 'spot',
+                'adjustForTimeDifference': True,
+                'headers': {
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+                }
+            },
+            'headers': {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
             }
         })
         
@@ -51,13 +71,35 @@ class RenderDataCollector:
         
     def check_connectivity(self) -> bool:
         """Verifica conectividade com APIs externas"""
+        # Testa Bybit primeiro
         try:
-            # Testa conectividade básica
-            response = self.session.get('https://api.binance.com/api/v3/ping', timeout=10)
-            return response.status_code == 200
+            response = self.session.get('https://api.bybit.com/v5/market/time', timeout=10)
+            if response.status_code == 200:
+                logger.info("✅ Bybit API conectada!")
+                return True
         except Exception as e:
-            logger.warning(f"Erro de conectividade: {e}")
-            return False
+            logger.warning(f"Bybit falhou: {e}")
+        
+        # Testa OKX como fallback
+        try:
+            response = self.session.get('https://www.okx.com/api/v5/public/time', timeout=10)
+            if response.status_code == 200:
+                logger.info("✅ OKX API conectada!")
+                return True
+        except Exception as e:
+            logger.warning(f"OKX falhou: {e}")
+        
+        # Testa Binance como último recurso
+        try:
+            response = self.session.get('https://api.binance.com/api/v3/ping', timeout=10)
+            if response.status_code == 200:
+                logger.info("✅ Binance API conectada!")
+                return True
+        except Exception as e:
+            logger.warning(f"Binance falhou: {e}")
+        
+        logger.error("❌ Nenhuma exchange disponível")
+        return False
     
     def get_fallback_symbols(self) -> List[str]:
         """Retorna símbolos fallback se API falhar"""
@@ -69,7 +111,7 @@ class RenderDataCollector:
         ]
     
     def fetch_with_fallback(self, symbol: str, timeframe: str = '1h', limit: int = 100) -> Optional[pd.DataFrame]:
-        """Busca dados com fallback para erros de rede"""
+        """Busca dados com fallback para múltiplas exchanges"""
         cache_key = f"{symbol}_{timeframe}_{limit}"
         now = time.time()
         
@@ -80,44 +122,40 @@ class RenderDataCollector:
                 logger.debug(f"Usando cache para {symbol}")
                 return cached_data
         
+        # Tenta Bybit primeiro
         try:
-            # Tenta busca normal
             ohlcv = self.exchange.fetch_ohlcv(symbol, timeframe, limit=limit)
-            
-            if not ohlcv:
-                logger.warning(f"Sem dados para {symbol}")
-                return None
-            
-            # Converte para DataFrame
-            df = pd.DataFrame(ohlcv, columns=['timestamp', 'open', 'high', 'low', 'close', 'volume'])
-            df['timestamp'] = pd.to_datetime(df['timestamp'], unit='ms')
-            df.set_index('timestamp', inplace=True)
-            
-            # Adiciona metadados
-            df.attrs['symbol'] = symbol
-            df.attrs['exchange'] = 'binance'
-            df.attrs['timeframe'] = timeframe
-            df.attrs['fetch_time'] = datetime.now()
-            
-            # Cacheia resultado
-            self.cache[cache_key] = (df, now)
-            
-            logger.info(f"Dados coletados para {symbol}: {len(df)} velas")
-            return df
-            
-        except ccxt.NetworkError as e:
-            logger.error(f"Erro de rede para {symbol}: {e}")
-            return None
-        except ccxt.RateLimitExceeded as e:
-            logger.error(f"Rate limit para {symbol}: {e}")
-            time.sleep(5)  # Espera antes de tentar novamente
-            return None
-        except ccxt.ExchangeError as e:
-            logger.error(f"Erro da exchange para {symbol}: {e}")
-            return None
+            exchange_used = 'bybit'
         except Exception as e:
-            logger.error(f"Erro genérico para {symbol}: {e}")
+            logger.warning(f"Bybit falhou para {symbol}: {e}")
+            # Tenta OKX
+            try:
+                ohlcv = self.exchange_fallback.fetch_ohlcv(symbol, timeframe, limit=limit)
+                exchange_used = 'okx'
+            except Exception as e2:
+                logger.error(f"OKX também falhou para {symbol}: {e2}")
+                return None
+        
+        if not ohlcv:
+            logger.warning(f"Sem dados para {symbol}")
             return None
+        
+        # Converte para DataFrame
+        df = pd.DataFrame(ohlcv, columns=['timestamp', 'open', 'high', 'low', 'close', 'volume'])
+        df['timestamp'] = pd.to_datetime(df['timestamp'], unit='ms')
+        df.set_index('timestamp', inplace=True)
+        
+        # Adiciona metadados
+        df.attrs['symbol'] = symbol
+        df.attrs['exchange'] = exchange_used
+        df.attrs['timeframe'] = timeframe
+        df.attrs['fetch_time'] = datetime.now()
+        
+        # Cacheia resultado
+        self.cache[cache_key] = (df, now)
+        
+        logger.info(f"Dados coletados para {symbol} via {exchange_used}: {len(df)} velas")
+        return df
     
     def collect_batch_render(self, symbols: List[str], timeframe: str = '1h', limit: int = 100) -> Dict[str, pd.DataFrame]:
         """Coleta em lote otimizado para Render"""
