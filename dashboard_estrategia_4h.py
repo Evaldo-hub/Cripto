@@ -693,13 +693,11 @@ class Estrategia1hEngine:
         
         return True, f"✅ Fechamento real 1h às {closing_hour:02d}:00 UTC"
     
-    def analyze_symbol_estrategia(self, symbol: str, df_1h: pd.DataFrame = None, collector=None) -> Dict:
+    def analyze_symbol_estrategia(self, symbol: str, df_1h: pd.DataFrame, df_15m: pd.DataFrame = None) -> Dict:
         """Análise completa para um símbolo usando estratégia 1h"""
         try:
-            # Se dataframe não fornecido, coleta dados (fallback)
-            if df_1h is None and collector:
-                df_1h = collector.fetch_single_symbol((symbol, '1h', 100, 'binance'))
-            elif df_1h is None:
+            # Engine NÃO deve buscar dados - só analisar
+            if df_1h is None:
                 return {
                     'symbol': symbol,
                     'error': f'Dados não fornecidos para {symbol}',
@@ -709,11 +707,6 @@ class Estrategia1hEngine:
                     'motivo_saida': '',
                     'nivel_saida': 'espera'
                 }
-            
-            df_15m = None
-            
-            if self.estrategia_config['multi_timeframe_validation'] and collector:
-                df_15m = collector.fetch_single_symbol((symbol, '15m', 50, 'binance'))
             
             if df_1h is None or len(df_1h) < self.estrategia_config['min_candles']:
                 return {
@@ -897,7 +890,27 @@ def run_estrategia_analysis():
         # Obtém símbolos (apenas moedas favoritas)
         logger.info("Obtendo símbolos para timeframe 1h...")
         st.info("📊 Obtendo lista de símbolos...")
-        all_symbols = collector.get_usdt_symbols('binance', min_volume=0)
+        
+        # Tenta Bybit primeiro (não bloqueada no Render)
+        try:
+            all_symbols = collector.get_usdt_symbols('bybit', min_volume=0)
+            exchange_used = 'bybit'
+            logger.info(f"Usando Bybit - Total de símbolos: {len(all_symbols)}")
+        except Exception as e:
+            logger.warning(f"Bybit falhou: {e}")
+            # Fallback para OKX
+            try:
+                all_symbols = collector.get_usdt_symbols('okx', min_volume=0)
+                exchange_used = 'okx'
+                logger.info(f"Usando OKX - Total de símbolos: {len(all_symbols)}")
+            except Exception as e2:
+                logger.error(f"OKX também falhou: {e2}")
+                # Último recurso - Binance com fallback
+                all_symbols = collector.get_usdt_symbols('binance', min_volume=0)
+                exchange_used = 'binance'
+                logger.info(f"Usando Binance (pode falhar) - Total: {len(all_symbols)}")
+        
+        st.info(f"🏢 Exchange usada: **{exchange_used.upper()}**")
         logger.info(f"Total de símbolos encontrados: {len(all_symbols)}")
         
         # Usa apenas moedas favoritas
@@ -914,7 +927,7 @@ def run_estrategia_analysis():
         logger.info(f"Moedas favoritas: {len(favorite_symbols)} encontradas")
         st.info(f"⚡ Analisando {len(symbols)} moedas: {', '.join(symbols[:5])}{'...' if len(symbols) > 5 else ''}")
         
-        # Coleta dados em 1h
+        # Coleta dados em 1h e 15m
         start_time = time.time()
         symbols_data = {}
         
@@ -922,16 +935,27 @@ def run_estrategia_analysis():
             try:
                 logger.info(f"Coletando dados para {symbol} ({i}/{len(symbols)})")
                 st.info(f"🔄 Coletando {symbol} ({i}/{len(symbols)})")
-                df = collector.fetch_single_symbol((symbol, '1h', 100, 'binance'))  # 1h timeframe
-                if df is not None and len(df) > 0:
-                    symbols_data[symbol] = df
-                    logger.info(f" {symbol}: {len(df)} candles coletados")
+                
+                # Coleta 1h
+                df_1h = collector.fetch_single_symbol((symbol, '1h', 100, exchange_used))
+                
+                # Coleta 15m se validação multi-timeframe estiver ativa
+                df_15m = None
+                if engine.estrategia_config['multi_timeframe_validation']:
+                    df_15m = collector.fetch_single_symbol((symbol, '15m', 50, exchange_used))
+                
+                if df_1h is not None and len(df_1h) > 0:
+                    symbols_data[symbol] = {
+                        '1h': df_1h,
+                        '15m': df_15m
+                    }
+                    logger.info(f" {symbol}: {len(df_1h)} candles 1h, {len(df_15m) if df_15m is not None else 0} candles 15m")
                 else:
-                    logger.warning(f" {symbol}: Sem dados")
+                    logger.warning(f" {symbol}: Sem dados 1h")
                 
                 # Delay entre requisições para evitar ban
                 import time
-                time.sleep(0.5)
+                time.sleep(0.3)
                 
             except Exception as e:
                 logger.error(f"Erro ao coletar {symbol}: {e}")
@@ -950,9 +974,13 @@ def run_estrategia_analysis():
         start_time = time.time()
         strategy_results = []
         
-        for symbol, df in symbols_data.items():
-            # Passa o dataframe já coletado para evitar requisições duplicadas
-            result = engine.analyze_symbol_estrategia(symbol, df)
+        for symbol, data in symbols_data.items():
+            # Passa todos os dataframes prontos para evitar requisições duplicadas
+            result = engine.analyze_symbol_estrategia(
+                symbol,
+                df_1h=data['1h'],
+                df_15m=data['15m']
+            )
             strategy_results.append(result)
         
         # Remove resultados com erro
